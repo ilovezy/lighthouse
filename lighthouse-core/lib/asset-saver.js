@@ -52,14 +52,14 @@ function addMetrics(traceEvents, auditResults) {
   const resSI = res['speed-index-metric'];
   const resSIext = resSI.extendedInfo;
   const resTTI = res['time-to-interactive'];
-
+  log.log('hi', resFMP)
   // monotonic clock ts from the trace.
-  const navStart = resFMPext.value.timings.navStart;
+  const navStart = resFMPext && resFMPext.value.timestamps.navStart;
 
   const timings = [{
     name: 'First Contentful Paint',
     traceEvtName: 'MarkFCP',
-    value: resFMPext && (navStart + resFMPext.value.timings.fCP),
+    value: resFMPext && (resFMPext.value.timestamps.fCP),
   }, {
     name: 'First Meaningful Paint',
     traceEvtName: 'MarkFMP',
