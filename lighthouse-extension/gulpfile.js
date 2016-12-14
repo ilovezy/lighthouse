@@ -69,7 +69,7 @@ gulp.task('html', () => {
 });
 
 gulp.task('chromeManifest', () => {
-  var manifestOpts = {
+  const manifestOpts = {
     buildnumber: false,
     background: {
       target: 'scripts/lighthouse-background.js',
@@ -111,6 +111,8 @@ gulp.task('browserify-lighthouse', () => {
       })
       .ignore('../lighthouse-core/lib/asset-saver.js') // relative from gulpfile location
       .ignore('source-map')
+      .ignore('whatwg-url')
+      .ignore('url')
       .ignore('debug/node');
 
       // Expose the audits, gatherers, and computed artifacts so they can be dynamically loaded.
@@ -178,7 +180,7 @@ gulp.task('watch', ['lint', 'browserify', 'html'], () => {
 });
 
 gulp.task('package', function() {
-  var manifest = require('./dist/manifest.json');
+  const manifest = require('./dist/manifest.json');
   return gulp.src('dist/**')
   .pipe(zip('lighthouse-' + manifest.version + '.zip'))
   .pipe(gulp.dest('package'));

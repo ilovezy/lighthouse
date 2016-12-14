@@ -1,5 +1,4 @@
 /**
- * @license
  * Copyright 2016 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 'use strict';
 
-const Gatherer = require('./gatherer');
+require('../../compiled-check.js')('chrome-launcher.js');
 
-class Offline extends Gatherer {
-  beforePass(options) {
-    return options.driver.goOffline();
-  }
+const ChromeLauncher = require('../../chrome-launcher.js').ChromeLauncher;
 
-  afterPass(options, tracingData) {
-    const navigationRecord = tracingData.networkRecords.filter(record => {
-      return record._url === options.url && record._fetchedViaServiceWorker;
-    }).pop(); // Take the last record that matches.
+/* eslint-env mocha */
 
-    return options.driver.goOnline(options).then(_ => {
-      return navigationRecord ? navigationRecord.statusCode : -1;
-    });
-  }
-}
-
-module.exports = Offline;
+describe('ChromeLauncher', () => {
+  it('doesn\'t fail when killed twice', () => {
+    const chromeInstance = new ChromeLauncher();
+    return chromeInstance.run()
+      .then(() => {
+        return Promise.all([
+          chromeInstance.kill(),
+          chromeInstance.kill()
+        ]);
+      });
+  });
+});

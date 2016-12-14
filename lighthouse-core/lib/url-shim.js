@@ -14,24 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * URL shim so we keep our code DRY
+ */
+
 'use strict';
 
-const Gatherer = require('./gatherer');
+/* global self */
 
-class Offline extends Gatherer {
-  beforePass(options) {
-    return options.driver.goOffline();
-  }
-
-  afterPass(options, tracingData) {
-    const navigationRecord = tracingData.networkRecords.filter(record => {
-      return record._url === options.url && record._fetchedViaServiceWorker;
-    }).pop(); // Take the last record that matches.
-
-    return options.driver.goOnline(options).then(_ => {
-      return navigationRecord ? navigationRecord.statusCode : -1;
-    });
-  }
-}
-
-module.exports = Offline;
+module.exports = (typeof self !== 'undefined' && self.URL) ||
+  require('url').URL || require('whatwg-url').URL;

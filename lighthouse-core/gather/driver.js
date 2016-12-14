@@ -20,7 +20,7 @@ const NetworkRecorder = require('../lib/network-recorder');
 const emulation = require('../lib/emulation');
 const Element = require('../lib/element');
 const EventEmitter = require('events').EventEmitter;
-const parseURL = require('url').parse;
+const URL = require('../lib/url-shim');
 
 const log = require('../lib/log.js');
 
@@ -224,15 +224,11 @@ class Driver {
     }).then(_ => this.getServiceWorkerVersions()).then(data => {
       versions = data.versions;
     }).then(_ => {
-      const parsedURL = parseURL(pageUrl);
-      const origin = `${parsedURL.protocol}//${parsedURL.hostname}` +
-          (parsedURL.port ? `:${parsedURL.port}` : '');
+      const origin = new URL(pageUrl).origin;
 
       registrations
         .filter(reg => {
-          const parsedURL = parseURL(reg.scopeURL);
-          const swOrigin = `${parsedURL.protocol}//${parsedURL.hostname}` +
-              (parsedURL.port ? `:${parsedURL.port}` : '');
+          const swOrigin = new URL(reg.scopeURL).origin;
 
           return origin === swOrigin;
         })
@@ -531,8 +527,8 @@ class Driver {
       // COMPAT: We've found `result` not retaining its value in this scenario when it's
       // declared with `let`. Observed in Chrome 50 and 52. While investigating the V8 bug
       // further, we'll use a plain `var` declaration.
-      var isEOF = false;
-      var result = '';
+      let isEOF = false;
+      let result = '';
 
       const readArguments = {
         handle: streamHandle.stream
@@ -654,9 +650,7 @@ class Driver {
   }
 
   clearDataForOrigin(url) {
-    const parsedURL = parseURL(url);
-    const origin = `${parsedURL.protocol}//${parsedURL.hostname}` +
-      (parsedURL.port ? `:${parsedURL.port}` : '');
+    const origin = new URL(url).origin;
 
     // Clear all types of storage except cookies, so the user isn't logged out.
     //   https://chromedevtools.github.io/debugger-protocol-viewer/tot/Storage/#type-StorageType
@@ -757,6 +751,7 @@ function captureJSCallUsage(funcRef, set) {
     // our custom one.
     Error.prepareStackTrace = originalPrepareStackTrace;
 
+    // eslint-disable-next-line no-invalid-this
     return originalFunc.apply(this, arguments);
   };
 }
