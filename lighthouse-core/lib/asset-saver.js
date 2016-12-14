@@ -34,11 +34,7 @@ function getFilenamePrefix(options) {
   return (filenamePrefix).replace(/[\/\?<>\\:\*\|":]/g, '-');
 }
 
-// Some trace events are particularly large, and not only consume a LOT of disk
-// space, but also cause problems for the JSON stringifier. For simplicity, we exclude them
-function filterForSize(traceEvents) {
-  return traceEvents.filter(e => e.name !== 'LayoutTree');
-}
+
 
 // inject 'em in there'
 function addMetrics(traceEvents, auditResults) {
@@ -189,7 +185,6 @@ function prepareAssets(options, artifacts, auditResults) {
     return chain.then(_ => artifacts.requestScreenshots(trace))
       .then(screenshots => {
         const traceData = Object.assign({}, trace);
-        traceData.traceEvents = filterForSize(traceData.traceEvents);
         traceData.traceEvents = addMetrics(traceData.traceEvents, auditResults);
         const html = screenshotDump(options, screenshots);
 
