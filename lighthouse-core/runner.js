@@ -29,7 +29,6 @@ class Runner {
   static run(connection, opts) {
     // Clean opts input.
     opts.flags = opts.flags || {};
-    let artifactsForLater;
 
     const config = opts.config;
 
@@ -117,16 +116,6 @@ class Runner {
       const err = Error(
           'The config must provide passes and audits, artifacts and audits, or auditResults');
       return Promise.reject(err);
-    }
-
-    /* istanbul ignore next */
-    if (opts.flags.saveArtifacts || opts.flags.saveAssets) {
-      // save assets to disk after audits, so we can integrate the metrics results
-      run = run.then(auditResults => {
-        opts.flags.saveArtifacts && assetSaver.saveArtifacts(artifactsForLater);
-        opts.flags.saveAssets && assetSaver.saveAssets(opts, artifactsForLater, auditResults);
-        return auditResults;
-      });
     }
 
     // Format and aggregate results before returning.
