@@ -17,7 +17,7 @@
 
 /**
  * @fileoverview Audit a page to see if it is using passive event listeners on
- * document-level event listeners (e.g. on window, document, document.body).
+ * scroll-blocking touch and wheel event listeners.
  */
 
 'use strict';
@@ -42,7 +42,9 @@ class PassiveEventsAudit extends Audit {
       category: 'JavaScript',
       name: 'uses-passive-event-listeners',
       description: 'Site uses passive listeners to improve scrolling performance',
-      helpText: `<a href="https://www.chromestatus.com/features/5745543795965952" target="_blank">Passive event listeners</a> enable better scrolling performance. If you don't call <code>preventDefault()</code> in your <code>${this.SCROLL_BLOCKING_EVENTS.toString()}</code> event listeners, make them passive: <code>addEventListener('touchstart', ..., {passive: true})</code>.`,
+      helpText: 'Consider marking your touch and wheel event listeners as `passive` ' +
+          'to improve your page\'s scroll performance. ' +
+          '[Learn more](https://developers.google.com/web/tools/lighthouse/audits/passive-event-listeners).',
       requiredArtifacts: ['URL', 'EventListeners']
     };
   }
@@ -56,16 +58,22 @@ class PassiveEventsAudit extends Audit {
       return PassiveEventsAudit.generateAuditResult(artifacts.EventListeners);
     }
 
+    let debugString;
     const listeners = artifacts.EventListeners;
-    const pageHost = new URL(artifacts.URL.finalUrl).host;
 
-    // Filter out non-passive window/document/document.body listeners that do
-    // not call preventDefault() are scroll blocking events.
+    // Flags all touch and wheel listeners that 1) are from same host
+    // 2) are not passive 3) do not call preventDefault()
     const results = listeners.filter(loc => {
       const isScrollBlocking = this.SCROLL_BLOCKING_EVENTS.indexOf(loc.type) !== -1;
       const mentionsPreventDefault = loc.handler.description.match(
             /\.preventDefault\(\s*\)/g);
-      const sameHost = loc.url ? new URL(loc.url).host === pageHost : true;
+      let sameHost = URL.hostsMatch(artifacts.URL.finalUrl, loc.url);
+
+      if (!URL.isValid(loc.url)) {
+        sameHost = true;
+        debugString = URL.INVALID_URL_DEBUG_STRING;
+      }
+
       return sameHost && isScrollBlocking && !loc.passive &&
              !mentionsPreventDefault;
     }).map(EventHelpers.addFormattedCodeSnippet);
@@ -77,7 +85,8 @@ class PassiveEventsAudit extends Audit {
       extendedInfo: {
         formatter: Formatter.SUPPORTED_FORMATS.URLLIST,
         value: groupedResults
-      }
+      },
+      debugString
     });
   }
 }

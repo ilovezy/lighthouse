@@ -1,10 +1,10 @@
-# lighthouse  [![Build Status](https://travis-ci.org/GoogleChrome/lighthouse.svg?branch=master)](https://travis-ci.org/GoogleChrome/lighthouse) [![Coverage Status](https://coveralls.io/repos/github/GoogleChrome/lighthouse/badge.svg?branch=master)](https://coveralls.io/github/GoogleChrome/lighthouse?branch=master)
+# Lighthouse  [![Build Status](https://travis-ci.org/GoogleChrome/lighthouse.svg?branch=master)](https://travis-ci.org/GoogleChrome/lighthouse) [![Coverage Status](https://coveralls.io/repos/github/GoogleChrome/lighthouse/badge.svg?branch=master)](https://coveralls.io/github/GoogleChrome/lighthouse?branch=master)
 
 > Lighthouse analyzes web apps and web pages, collecting modern performance metrics and insights on developer best practices.
 
 HTML report:
 
-![image](https://cloud.githubusercontent.com/assets/238208/20411484/851a02ca-acd6-11e6-96f8-f90204801581.png)
+![image](https://cloud.githubusercontent.com/assets/238208/21210165/b3c368c0-c22d-11e6-91fb-aa24959e2637.png)
 
 Default CLI output:
 
@@ -36,6 +36,12 @@ lighthouse https://airhorner.com/
 # see flags and options
 lighthouse --help
 ```
+
+## Lighthouse Viewer
+
+If you run Lighthouse with the `--output=json` flag, it will generate a json dump of the run. You can view this report online by visiting http://googlechrome.github.io/lighthouse/viewer/ and dragging the file onto the app. Reports can also be shared by clicking the share icon in the top right corner and signing in to Github. 
+
+Note: shared reports are stashed as a secret Gist in Github, under your account.
 
 ## Develop
 
@@ -289,8 +295,7 @@ git -C "./third_party/src/catapult/" pull
 node scripts/build-traceviewer-module.js
 ```
 
-
 <p align="center">
 <img src="https://cloud.githubusercontent.com/assets/883126/13900813/10a62a14-edcc-11e5-8ad3-f927a592eeb0.png" height="300px"><br>
-Lighthouse stops you crashing into the rocks; lights the way.
+<b>Lighthouse</b>, ˈlītˌhous (n): a <s>tower or other structure</s> tool containing a beacon light to warn or guide <s>ships</s> developers at "sea".
 </p>

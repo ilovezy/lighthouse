@@ -51,7 +51,8 @@ class NoMutationEventsAudit extends Audit {
       category: 'JavaScript',
       name: 'no-mutation-events',
       description: 'Site does not use Mutation Events in its own scripts',
-      helpText: 'Using <a href="https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Mutation_events" target="_blank">Mutation events</a> degrades application performance. They are deprecated in the DOM events spec, replaced by <a href="https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver" target="_blank">MutationObservers</a>.',
+      helpText: 'Mutation Events are deprecated and harm performance. Consider using Mutation ' +
+          'Observers instead. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/mutation-events).',
       requiredArtifacts: ['URL', 'EventListeners']
     };
   }
@@ -65,13 +66,18 @@ class NoMutationEventsAudit extends Audit {
       return NoMutationEventsAudit.generateAuditResult(artifacts.EventListeners);
     }
 
+    let debugString;
     const listeners = artifacts.EventListeners;
-
-    const pageHost = new URL(artifacts.URL.finalUrl).host;
 
     const results = listeners.filter(loc => {
       const isMutationEvent = this.MUTATION_EVENTS.indexOf(loc.type) !== -1;
-      const sameHost = loc.url ? new URL(loc.url).host === pageHost : true;
+      let sameHost = URL.hostsMatch(artifacts.URL.finalUrl, loc.url);
+
+      if (!URL.isValid(loc.url)) {
+        sameHost = true;
+        debugString = URL.INVALID_URL_DEBUG_STRING;
+      }
+
       return sameHost && isMutationEvent;
     }).map(EventHelpers.addFormattedCodeSnippet);
 
@@ -82,7 +88,8 @@ class NoMutationEventsAudit extends Audit {
       extendedInfo: {
         formatter: Formatter.SUPPORTED_FORMATS.URLLIST,
         value: groupedResults
-      }
+      },
+      debugString
     });
   }
 }

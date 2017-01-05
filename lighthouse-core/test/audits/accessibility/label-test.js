@@ -16,31 +16,17 @@
  */
 'use strict';
 
-const Audit = require('../../audits/image-alt.js');
+const Audit = require('../../../audits/accessibility/label.js');
 const assert = require('assert');
 
-/* global describe, it*/
+/* eslint-env mocha */
 
-describe('Accessibility: image-alt audit', () => {
-  it('handles empty rules', () => {
-    const output = Audit.createDebugString();
-    assert.ok(typeof output === 'string');
-  });
-
-  it('creates debug strings', () => {
-    const emptyAudit = Audit.createDebugString({
-      nodes: [],
-      help: 'http://example.com/'
-    });
-
-    assert.equal(emptyAudit, 'http://example.com/ (Failed on 0 elements)');
-  });
-
+describe('Accessibility: label audit', () => {
   it('generates an audit output', () => {
     const artifacts = {
       Accessibility: {
         violations: [{
-          id: 'image-alt',
+          id: 'label',
           nodes: [],
           help: 'http://example.com/'
         }]
@@ -48,7 +34,8 @@ describe('Accessibility: image-alt audit', () => {
     };
 
     const output = Audit.audit(artifacts);
-    assert.equal(output.score, false);
+    assert.equal(output.rawValue, false);
+    assert.equal(output.displayValue, '');
     assert.equal(output.debugString, 'http://example.com/ (Failed on 0 elements)');
   });
 
@@ -56,7 +43,7 @@ describe('Accessibility: image-alt audit', () => {
     const artifacts = {
       Accessibility: {
         violations: [{
-          id: 'image-alt',
+          id: 'label',
           nodes: [{}],
           help: 'http://example.com/'
         }]
@@ -64,7 +51,19 @@ describe('Accessibility: image-alt audit', () => {
     };
 
     const output = Audit.audit(artifacts);
-    assert.equal(output.score, false);
+    assert.equal(output.rawValue, false);
+    assert.equal(output.displayValue, '');
     assert.equal(output.debugString, 'http://example.com/ (Failed on 1 element)');
+  });
+
+  it('doesn\'t throw an error when violations is undefined', () => {
+    const artifacts = {
+      Accessibility: {
+        violations: undefined
+      }
+    };
+
+    const output = Audit.audit(artifacts);
+    assert.equal(output.description, 'Every form element has a label');
   });
 });

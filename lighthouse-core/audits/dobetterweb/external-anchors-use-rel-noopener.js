@@ -29,8 +29,10 @@ class ExternalAnchorsUseRelNoopenerAudit extends Audit {
     return {
       category: 'Performance',
       name: 'external-anchors-use-rel-noopener',
-      description: 'Site opens external anchors using rel="noopener".',
-      helpText: 'Anchors that open in a new tab should use <code>target="_blank"</code> and <code>rel="noopener"</code> so the <a href="https://jakearchibald.com/2016/performance-benefits-of-rel-noopener" target="_blank">opening page\'s performance does not suffer.</a>',
+      description: 'Site opens external anchors using rel="noopener"',
+      helpText: 'Open new tabs using `rel="noopener"` to improve performance and ' +
+          'prevent security vulnerabilities. ' +
+          '[Learn more](https://developers.google.com/web/tools/lighthouse/audits/noopener).',
       requiredArtifacts: ['URL', 'AnchorsWithNoRelNoopener']
     };
   }
@@ -47,17 +49,29 @@ class ExternalAnchorsUseRelNoopenerAudit extends Audit {
       });
     }
 
+    let debugString;
     const pageHost = new URL(artifacts.URL.finalUrl).host;
     // Filter usages to exclude anchors that are same origin
+    // TODO: better extendedInfo for anchors with no href attribute:
+    // https://github.com/GoogleChrome/lighthouse/issues/1233
+    // https://github.com/GoogleChrome/lighthouse/issues/1345
     const failingAnchors = artifacts.AnchorsWithNoRelNoopener.usages
-      .filter(anchor => new URL(anchor.href).host !== pageHost)
+      .filter(anchor => {
+        try {
+          return anchor.href === '' || new URL(anchor.href).host !== pageHost;
+        } catch (err) {
+          debugString = 'Lighthouse was unable to determine the destination ' +
+              'of some anchor tags. If they are not used as hyperlinks, ' +
+              'consider removing the _blank target.';
+          return true;
+        }
+      })
       .map(anchor => {
         return {
-          url: `<a
-            href="${anchor.href}"
-            ${anchor.target ? ` target="${anchor.target}"` : ''}
-            ${anchor.rel ? ` rel="${anchor.rel}"` : ''}>...
-          </a>`
+          url: '<a' +
+              (anchor.href ? ` href="${anchor.href}"` : '') +
+              (anchor.target ? ` target="${anchor.target}"` : '') +
+              (anchor.rel ? ` rel="${anchor.rel}"` : '') + '>'
         };
       });
 
@@ -66,7 +80,8 @@ class ExternalAnchorsUseRelNoopenerAudit extends Audit {
       extendedInfo: {
         formatter: Formatter.SUPPORTED_FORMATS.URLLIST,
         value: failingAnchors
-      }
+      },
+      debugString
     });
   }
 }

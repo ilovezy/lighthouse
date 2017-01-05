@@ -36,7 +36,8 @@ class NoOldFlexboxAudit extends Audit {
       category: 'CSS',
       name: 'no-old-flexbox',
       description: 'Site does not use the old CSS flexbox',
-      helpText: 'The older spec for CSS Flexbox (<code>display: box</code>) is deprecated and <a href="https://developers.google.com/web/updates/2013/10/Flexbox-layout-isn-t-slow?hl=en" target="_blank">less performant</a>. Consider using the <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flexible_Box_Layout/Using_CSS_flexible_boxes" target="_blank">newer version</a> (<code>display: flex</code>), which does not suffer from the same issues.',
+      helpText: 'The 2009 spec of Flexbox is deprecated and is 2.3x slower than the latest ' +
+          'spec. [Learn more](https://developers.google.com/web/tools/lighthouse/audits/old-flexbox).',
       requiredArtifacts: ['Styles']
     };
   }
@@ -50,13 +51,13 @@ class NoOldFlexboxAudit extends Audit {
       return NoOldFlexboxAudit.generateAuditResult(artifacts.Styles);
     }
 
-    // TODO: consider usage of vendor prefixes
-    // TODO: consider usage of other older properties from
     // https://www.w3.org/TR/2009/WD-css3-flexbox-20090723/
     // (e.g. box-flex, box-orient, box-flex-group, display: flexbox (2011 version))
+    const propsNames = ['box-flex', 'box-orient', 'box-flex-group', 'display'];
+    const propsNamesWithPrefixes = StyleHelpers.addVendorPrefixes(propsNames);
+    const propsValues = ['box', 'flexbox'];
     const sheetsUsingDisplayBox = StyleHelpers.filterStylesheetsByUsage(
-        artifacts.Styles, 'display', 'box'); // 2009 version
-
+        artifacts.Styles, propsNamesWithPrefixes, propsValues);
     const urlList = [];
     sheetsUsingDisplayBox.forEach(sheet => {
       sheet.parsedContent.forEach(props => {

@@ -16,31 +16,17 @@
  */
 'use strict';
 
-const Audit = require('../../audits/color-contrast.js');
+const Audit = require('../../../audits/accessibility/aria-allowed-attr.js');
 const assert = require('assert');
 
-/* global describe, it*/
+/* eslint-env mocha */
 
-describe('Accessibility: color-contrast audit', () => {
-  it('handles empty rules', () => {
-    const output = Audit.createDebugString();
-    assert.ok(typeof output === 'string');
-  });
-
-  it('creates debug strings', () => {
-    const emptyAudit = Audit.createDebugString({
-      nodes: [],
-      help: 'http://example.com/'
-    });
-
-    assert.equal(emptyAudit, 'http://example.com/ (Failed on 0 elements)');
-  });
-
+describe('Accessibility: aria-allowed-attr audit', () => {
   it('generates an audit output', () => {
     const artifacts = {
       Accessibility: {
         violations: [{
-          id: 'color-contrast',
+          id: 'aria-allowed-attr',
           nodes: [],
           help: 'http://example.com/'
         }]
@@ -48,7 +34,8 @@ describe('Accessibility: color-contrast audit', () => {
     };
 
     const output = Audit.audit(artifacts);
-    assert.equal(output.score, false);
+    assert.equal(output.rawValue, false);
+    assert.equal(output.displayValue, '');
     assert.equal(output.debugString, 'http://example.com/ (Failed on 0 elements)');
   });
 
@@ -56,7 +43,7 @@ describe('Accessibility: color-contrast audit', () => {
     const artifacts = {
       Accessibility: {
         violations: [{
-          id: 'color-contrast',
+          id: 'aria-allowed-attr',
           nodes: [{}],
           help: 'http://example.com/'
         }]
@@ -64,7 +51,19 @@ describe('Accessibility: color-contrast audit', () => {
     };
 
     const output = Audit.audit(artifacts);
-    assert.equal(output.score, false);
+    assert.equal(output.rawValue, false);
+    assert.equal(output.displayValue, '');
     assert.equal(output.debugString, 'http://example.com/ (Failed on 1 element)');
+  });
+
+  it('doesn\'t throw an error when violations is undefined', () => {
+    const artifacts = {
+      Accessibility: {
+        violations: undefined
+      }
+    };
+
+    const output = Audit.audit(artifacts);
+    assert.equal(output.description, 'Element aria-* attributes are allowed for this role');
   });
 });

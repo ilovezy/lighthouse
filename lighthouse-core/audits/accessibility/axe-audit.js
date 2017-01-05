@@ -17,31 +17,25 @@
 
 'use strict';
 
-const Audit = require('./audit');
-const Formatter = require('../formatters/formatter');
+/**
+ * @fileoverview Base class for all aXe audits. Provides a consistent way to
+ * generate audit results using aXe rule names.
+ */
 
-class ColorContrast extends Audit {
-  /**
-   * @return {!AuditMeta}
-   */
-  static get meta() {
-    return {
-      category: 'Accessibility',
-      name: 'color-contrast',
-      description: 'Background and foreground colors have a sufficient contrast ratio',
-      requiredArtifacts: ['Accessibility']
-    };
-  }
+const Audit = require('../audit');
+const Formatter = require('../../formatters/formatter');
 
+class AxeAudit extends Audit {
   /**
-   * @param {!Artifacts} artifacts
+   * @param {!Artifacts} artifacts Accessibility gatherer artifacts. Note that AxeAudit
+   * expects the meta name for the class to match the rule id from aXe.
    * @return {!AuditResult}
    */
   static audit(artifacts) {
     const violations = artifacts.Accessibility.violations || [];
-    const rule = violations.find(result => result.id === 'color-contrast');
+    const rule = violations.find(result => result.id === this.meta.name);
 
-    return ColorContrast.generateAuditResult({
+    return this.generateAuditResult({
       rawValue: typeof rule === 'undefined',
       debugString: this.createDebugString(rule),
       extendedInfo: {
@@ -51,6 +45,10 @@ class ColorContrast extends Audit {
     });
   }
 
+  /**
+   * @param {!{nodes: Array, help: string}} rule
+   * @return {!string}
+   */
   static createDebugString(rule) {
     if (typeof rule === 'undefined') {
       return '';
@@ -61,4 +59,4 @@ class ColorContrast extends Audit {
   }
 }
 
-module.exports = ColorContrast;
+module.exports = AxeAudit;

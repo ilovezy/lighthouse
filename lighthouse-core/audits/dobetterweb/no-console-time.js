@@ -34,8 +34,11 @@ class NoConsoleTimeAudit extends Audit {
     return {
       category: 'JavaScript',
       name: 'no-console-time',
-      description: 'Site does not use console.time() in its own scripts',
-      helpText: 'Consider using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/User_Timing_API" target="_blank">User Timing API</a> (<a href="https://developer.mozilla.org/en-US/docs/Web/API/Performance/mark" target="_blank">performance.mark()</a> and <a href="https://developer.mozilla.org/en-US/docs/Web/API/Performance/measure" target="_blank">performance.measure()</a>), which is a standard, uses high resolution timestamps, and has the added benefit of integrating with the DevTools timeline.',
+      description: 'Site does not use `console.time()` in its own scripts',
+      helpText: 'Consider using `performance.mark()` and `performance.measure()` ' +
+          'from the User Timing API instead. They provide high-precision timestamps, ' +
+          'independent of the system clock, and are integrated in the Chrome DevTools Timeline. ' +
+          '[Learn more](https://developers.google.com/web/tools/lighthouse/audits/console-time).',
       requiredArtifacts: ['URL', 'ConsoleTimeUsage']
     };
   }
@@ -57,10 +60,21 @@ class NoConsoleTimeAudit extends Audit {
       });
     }
 
-    const pageHost = new URL(artifacts.URL.finalUrl).host;
+    let debugString;
     // Filter usage from other hosts and keep eval'd code.
     const results = artifacts.ConsoleTimeUsage.usage.filter(err => {
-      return err.isEval ? !!err.url : new URL(err.url).host === pageHost;
+      if (err.isEval) {
+        return !!err.url;
+      }
+
+      if (URL.isValid(err.url)) {
+        return URL.hostsMatch(artifacts.URL.finalUrl, err.url);
+      }
+
+      // If the violation doesn't have a valid url, don't filter it out, but
+      // warn the user that we don't know what the callsite is.
+      debugString = URL.INVALID_URL_DEBUG_STRING;
+      return true;
     }).map(err => {
       return Object.assign({
         label: `line: ${err.line}, col: ${err.col}`
@@ -72,7 +86,8 @@ class NoConsoleTimeAudit extends Audit {
       extendedInfo: {
         formatter: Formatter.SUPPORTED_FORMATS.URLLIST,
         value: results
-      }
+      },
+      debugString
     });
   }
 }

@@ -20,7 +20,6 @@ const Driver = require('./gather/driver.js');
 const GatherRunner = require('./gather/gather-runner');
 const Aggregate = require('./aggregator/aggregate');
 const Audit = require('./audits/audit');
-const assetSaver = require('./lib/asset-saver');
 const log = require('./lib/log');
 const fs = require('fs');
 const path = require('path');
@@ -91,25 +90,29 @@ class Runner {
         return artifacts;
       });
 
-      // Ignoring these two flags for coverage as this functionality is not exposed by the module.
-      /* istanbul ignore next */
-      if (opts.flags.saveArtifacts || opts.flags.saveAssets) {
-        run = run.then(artifacts => {
-          artifactsForLater = artifacts;
-          return artifacts;
-        });
-      }
-
       // Run each audit sequentially, the auditResults array has all our fine work
       const auditResults = [];
-      run = run.then(artifacts => config.audits.reduce((chain, audit) => {
-        return chain.then(_ => {
-          return Runner._runAudit(audit, artifacts);
-        }).then(ret => auditResults.push(ret));
-      }, Promise.resolve()).then(_ => auditResults));
+      for (const audit of config.audits) {
+        run = run.then(artifacts => {
+          return Runner._runAudit(audit, artifacts)
+            .then(ret => auditResults.push(ret))
+            .then(_ => artifacts);
+        });
+      }
+      run = run.then(artifacts => {
+        return {artifacts, auditResults};
+      });
     } else if (config.auditResults) {
       // If there are existing audit results, surface those here.
-      run = run.then(_ => config.auditResults);
+      // Instantiate and return artifacts for consistency.
+      const artifacts = Object.assign(GatherRunner.instantiateComputedArtifacts(),
+                                      config.artifacts || {});
+      run = run.then(_ => {
+        return {
+          artifacts,
+          auditResults: config.auditResults
+        };
+      });
     } else {
       const err = Error(
           'The config must provide passes and audits, artifacts and audits, or auditResults');
@@ -128,8 +131,8 @@ class Runner {
 
     // Format and aggregate results before returning.
     run = run
-      .then(auditResults => {
-        const formattedAudits = auditResults.reduce((formatted, audit) => {
+      .then(runResults => {
+        const formattedAudits = runResults.auditResults.reduce((formatted, audit) => {
           formatted[audit.name] = audit;
           return formatted;
         }, {});
@@ -137,7 +140,8 @@ class Runner {
         // Only run aggregations if needed.
         let aggregations = [];
         if (config.aggregations) {
-          aggregations = config.aggregations.map(a => Aggregate.aggregate(a, auditResults));
+          aggregations = config.aggregations.map(
+            a => Aggregate.aggregate(a, runResults.auditResults));
         }
 
         return {
@@ -146,6 +150,7 @@ class Runner {
           initialUrl: opts.initialUrl,
           url: opts.url,
           audits: formattedAudits,
+          artifacts: runResults.artifacts,
           aggregations
         };
       });
@@ -199,9 +204,13 @@ class Runner {
   static getAuditList() {
     const fileList = [
       ...fs.readdirSync(path.join(__dirname, './audits')),
-      ...fs.readdirSync(path.join(__dirname, './audits/dobetterweb')).map(f => `dobetterweb/${f}`)
+      ...fs.readdirSync(path.join(__dirname, './audits/dobetterweb')).map(f => `dobetterweb/${f}`),
+      ...fs.readdirSync(path.join(__dirname, './audits/accessibility'))
+          .map(f => `accessibility/${f}`)
     ];
-    return fileList.filter(f => /\.js$/.test(f) && f !== 'audit.js').sort();
+    return fileList.filter(f => {
+      return /\.js$/.test(f) && f !== 'audit.js' && f !== 'accessibility/axe-audit.js';
+    }).sort();
   }
 
   /**
