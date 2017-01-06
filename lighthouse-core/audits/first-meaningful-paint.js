@@ -83,7 +83,6 @@ class FirstMeaningfulPaint extends Audit {
   }
 
   static calculateScore(evts) {
-    log.log('fmp evts', evts)
     const firstMeaningfulPaint = evts.firstMeaningfulPaint && (evts.firstMeaningfulPaint.ts - evts.navigationStart.ts) / 1000;
     const firstContentfulPaint = evts.firstContentfulPaint && (evts.firstContentfulPaint.ts - evts.navigationStart.ts) / 1000;
 
